@@ -1,6 +1,6 @@
 const express = require("express");
 const route = express.Router();
-
+const jwt = require("jsonwebtoken");
 const User = require("../db/models/user");
 const bcrypt = require("bcrypt");
 
@@ -34,10 +34,21 @@ route.post("/login", async (req, res) => {
       user.password
     );
     !validPassword && res.status(400).json("wrong password");
-    res.status(200).json(user);
+    const token = jwt.sign({ _id: user._id }, process.env.SECRET_KEY);
+    res.status(200).json({
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      rollNumber: user.rollNumber,
+      job: user.job,
+      profilePicture: user.profilePicture,
+      token: token,
+    });
   } catch (error) {
     res.status(500).json(error);
   }
 });
+
+
 
 module.exports = route;
