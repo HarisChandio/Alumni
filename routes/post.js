@@ -1,6 +1,9 @@
 const route = require("express").Router();
 const Job = require("../db/models/job");
+const User = require("../db/models/user");
 const authenticate = require("../middlewares/authenticator");
+
+//post job
 route.post("/post/job", authenticate, async (req, res) => {
   try {
     const newJob = new Job({
@@ -9,6 +12,7 @@ route.post("/post/job", authenticate, async (req, res) => {
       location: req.body.location,
       salary: req.body.salary,
       description: req.body.description,
+      companyLogo: req.body.companyLogo,
       createdBy: req.user._id,
     });
     const job = await newJob.save();
@@ -18,6 +22,7 @@ route.post("/post/job", authenticate, async (req, res) => {
   }
 });
 
+//get all jobs
 route.get("/get/jobs", async (req, res) => {
   try {
     const jobs = await Job.find().populate("createdBy", "username");
@@ -27,6 +32,7 @@ route.get("/get/jobs", async (req, res) => {
   }
 });
 
+//get job by id
 route.get("/get/job/:id", async (req, res) => {
   try {
     const job = await Job.findById(req.params.id).populate(
@@ -39,6 +45,7 @@ route.get("/get/job/:id", async (req, res) => {
   }
 });
 
+//apply for job with jobId, by user Id
 route.post("/apply/:id", authenticate, async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
@@ -47,12 +54,16 @@ route.post("/apply/:id", authenticate, async (req, res) => {
     }
     job.applicants.push(req.user._id);
     await job.save();
+    const user = await User.findById(req.user._id);
+    user.appliedJobs.push(req.params.id);
+    await user.save();
     res.status(200).json("Applied successfully");
   } catch (error) {
     return res.status(500).json(error);
   }
 });
 
+//get all jobs applied by user
 route.get("/get/applied/jobs", authenticate, async (req, res) => {
   try {
     const jobs = await Job.find({ applicants: req.user._id }).populate(
@@ -65,9 +76,13 @@ route.get("/get/applied/jobs", authenticate, async (req, res) => {
   }
 });
 
+//get all applicants for a job
 route.get("/get/applicants/:id", authenticate, async (req, res) => {
   try {
-    const job = await Job.findById(req.params.id).populate("applicants", "username");
+    const job = await Job.findById(req.params.id).populate(
+      "applicants",
+      "username"
+    );
     res.status(200).json(job.applicants);
   } catch (error) {
     return res.status(500).json(error);
