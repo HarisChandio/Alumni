@@ -4,7 +4,8 @@ const User = require("../db/models/user");
 
 const authenticate = async (req, res, next) => {
   try {
-    const token = req.header("x-auth-token");
+
+    const token = req.body.token;
     if (!token) {
       return res.status(401).json("You need to login first");
     }

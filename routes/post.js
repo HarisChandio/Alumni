@@ -4,7 +4,7 @@ const User = require("../db/models/user");
 const authenticate = require("../middlewares/authenticator");
 
 //post job
-route.post("/post/job", authenticate, async (req, res) => {
+route.post("/job/post", authenticate, async (req, res) => {
   try {
     const newJob = new Job({
       title: req.body.title,
@@ -16,7 +16,9 @@ route.post("/post/job", authenticate, async (req, res) => {
       createdBy: req.user._id,
     });
     const job = await newJob.save();
-    res.status(200).json(job);
+    const user = await User.findById(req.body.createdBy);
+    user.postedJobs.push(job._id);
+    return res.status(200).json(job);
   } catch (error) {
     return res.status(500).json(error);
   }
@@ -33,7 +35,7 @@ route.get("/get/jobs", async (req, res) => {
 });
 
 //get job by id
-route.get("/get/job/:id", async (req, res) => {
+route.get("/job/get/:id", async (req, res) => {
   try {
     const job = await Job.findById(req.params.id).populate(
       "createdBy",
@@ -45,8 +47,9 @@ route.get("/get/job/:id", async (req, res) => {
   }
 });
 
+
 //apply for job with jobId, by user Id
-route.post("/apply/:id", authenticate, async (req, res) => {
+route.post("/job/apply/:id", authenticate, async (req, res) => {
   try {
     const job = await Job.findById(req.params.id);
     if (job.applicants.includes(req.user._id)) {
@@ -54,6 +57,7 @@ route.post("/apply/:id", authenticate, async (req, res) => {
     }
     job.applicants.push(req.user._id);
     await job.save();
+    //now update the user's appliedjobs
     const user = await User.findById(req.user._id);
     user.appliedJobs.push(req.params.id);
     await user.save();
@@ -64,7 +68,7 @@ route.post("/apply/:id", authenticate, async (req, res) => {
 });
 
 //get all jobs applied by user
-route.get("/get/applied/jobs", authenticate, async (req, res) => {
+route.get("/job/get/applied/jobs", authenticate, async (req, res) => {
   try {
     const jobs = await Job.find({ applicants: req.user._id }).populate(
       "createdBy",
@@ -77,7 +81,7 @@ route.get("/get/applied/jobs", authenticate, async (req, res) => {
 });
 
 //get all applicants for a job
-route.get("/get/applicants/:id", authenticate, async (req, res) => {
+route.get("/job/get/applicants/:id", authenticate, async (req, res) => {
   try {
     const job = await Job.findById(req.params.id).populate(
       "applicants",

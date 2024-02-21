@@ -29,6 +29,30 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: false,
   },
+  postedJobs: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "psJobs",
+    },
+  ],
+  appliedJobs: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "apJobs",
+    },    
+  ],
+  postedEvents:[
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "psEvents"
+    }
+  ],
+  volunteered:[
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "vol"
+    }
+  ],
   profilePicture: {
     type: String,
     default: "",
